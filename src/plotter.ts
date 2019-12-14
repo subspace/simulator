@@ -7,7 +7,7 @@ import * as crypto from './crypto';
 
 export class Plotter {
 
-  public static async init(storageDir: string | undefined, size: number): Promise<Plotter> {
+  public static async init(size: number, storageDir: string | undefined): Promise<Plotter> {
 
      // set storage directory for plotting
     let storagePath: string;

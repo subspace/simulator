@@ -21,6 +21,7 @@ async function run(): Promise<void> {
   const keySeed = crypto.randomBytes(32);
   const keys = notary.generateKeypair(keySeed);
   const id = crypto.hash(keys.binaryPublicKey);
+  console.log('Generated keys');
 
   // generate one merkle tree
   const indexHashes: Uint8Array[] = [];
@@ -28,14 +29,16 @@ async function run(): Promise<void> {
     indexHashes.push(crypto.hash(num2bin16(i)));
   }
   const merkleTree = crypto.buildMerkleTree(indexHashes);
+  console.log('Built merkle tree');
 
   // plot the farm
-  const plotSize = PLOT_SIZES[2];
+  const plotSize = PLOT_SIZES[0];
   const pieceCount = plotSize / PIECE_SIZE;
-  const plot = await Plotter.init(process.argv[2], plotSize);
+  const plot = await Plotter.init(plotSize, process.argv[2]);
   for (let i = 0; i < pieceCount; ++i) {
     await plot.add(GENESIS_PIECE, id, i);
   }
+  console.log('Completed Plotting');
 
   // solve, prove, and verify some number of challenges
   const samples = 1;
@@ -50,6 +53,7 @@ async function run(): Promise<void> {
       replicator.verify(proof, notary, pieceCount, merkleTree.root);
     }
   }
+  console.log('Completed evaluation loop');
 
   // After Ledger Module Built
 
