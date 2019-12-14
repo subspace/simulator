@@ -1,3 +1,5 @@
+// tslint:disable: no-console
+
 import * as crypto from 'crypto';
 import { Tree } from 'merkle-tree-binary';
 import { ROUNDS } from './constants';
@@ -18,7 +20,7 @@ export function hash(data: Uint8Array, outputLength = 32, type = 'sha256'): Uint
 export function hmac(encoding: Uint8Array, challenge: Uint8Array): Uint8Array {
   const hmac = crypto.createHmac('sha256', encoding);
   hmac.update(challenge);
-  return hmac.digest();
+  return Uint8Array.from(hmac.digest());
 }
 
 export function encode(piece: Uint8Array, index: number, key: Uint8Array, rounds = ROUNDS): Uint8Array {

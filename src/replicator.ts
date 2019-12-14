@@ -16,7 +16,7 @@ export interface ISolution {
 export async function solve(challenge: Uint8Array, pieceCount: number, plot: Plotter): Promise<ISolution> {
   const index = modulo(challenge, pieceCount);
   const encoding = await plot.get(index);
-  const tag = crypto.hmac(challenge, encoding);
+  const tag = crypto.hmac(encoding, challenge);
   const quality = measureQuality(tag);
   return {
     index,
@@ -55,15 +55,16 @@ export function verify(proof: IProof, notary: Ed25519Signatures, pieceCount: num
   const index = modulo(proof.challenge, pieceCount);
 
   // is tag correct?
-  if (! areArraysEqual(proof.tag, crypto.hmac(proof.encoding, proof.challenge))) {
+  const tag = crypto.hmac(proof.encoding, proof.challenge);
+  if (!areArraysEqual(proof.tag, tag)) {
     throw new Error('Invalid proof of storage, tag is incorrect');
   }
 
   // does encoding decode to to pieceHash with public key and challenge index
   const key = crypto.hash(proof.publicKey);
-  const piece = crypto.decode(proof.encoding, index, key, 384);
+  const piece = crypto.decode(proof.encoding, index, key);
   const pieceHash = crypto.hash(piece);
-  if (! areArraysEqual(pieceHash, GENESIS_PIECE_HASH)) {
+  if (!areArraysEqual(pieceHash, GENESIS_PIECE_HASH)) {
     throw new Error('Invalid proof of storage, decoding fails');
   }
 
