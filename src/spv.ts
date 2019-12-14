@@ -1,6 +1,5 @@
 // tslint:disable: object-literal-sort-keys
 
-import { GENESIS_PIECE_HASH } from './constants';
 import * as crypto from './crypto';
 import { Plotter } from './plotter';
 import { Ed25519Signatures, IKeyPair } from "./signatures";
@@ -47,7 +46,7 @@ export function prove(challenge: Uint8Array, solution: ISolution, notary: Ed2551
   };
 }
 
-export function verify(proof: IProof, notary: Ed25519Signatures, pieceCount: number, root: Uint8Array): boolean {
+export function verify(proof: IProof, notary: Ed25519Signatures, pieceCount: number, root: Uint8Array, genesisPieceHash: Uint8Array): boolean {
 
   // is challenge part of my chain?
 
@@ -62,9 +61,12 @@ export function verify(proof: IProof, notary: Ed25519Signatures, pieceCount: num
 
   // does encoding decode to to pieceHash with public key and challenge index
   const key = crypto.hash(proof.publicKey);
-  const piece = crypto.decode(proof.encoding, index, key);
+  const iv = num2bin16(index);
+  // tslint:disable-next-line: no-console
+  console.log(proof.encoding, index, iv, key);
+  const piece = crypto.decode(proof.encoding, iv, key);
   const pieceHash = crypto.hash(piece);
-  if (!areArraysEqual(pieceHash, GENESIS_PIECE_HASH)) {
+  if (!areArraysEqual(pieceHash, genesisPieceHash)) {
     throw new Error('Invalid proof of storage, decoding fails');
   }
 

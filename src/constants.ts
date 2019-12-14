@@ -1,6 +1,3 @@
-import * as crypto from './crypto';
-import { createGenesisPiece } from './utils';
-
 export const PIECE_SIZE = 4096;
 export const ROUNDS = 384;
 export const PLOT_SIZES = [
@@ -12,6 +9,3 @@ export const PLOT_SIZES = [
   107374182400,   // 100 GB
   1073741824000,  // 1 TB
 ];
-
-export const GENESIS_PIECE = createGenesisPiece('SUBSPACE');
-export const GENESIS_PIECE_HASH = crypto.hash(GENESIS_PIECE);

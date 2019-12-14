@@ -3,7 +3,6 @@
 import * as crypto from 'crypto';
 import { Tree } from 'merkle-tree-binary';
 import { ROUNDS } from './constants';
-import { num2bin16 } from './utils';
 
 export function randomBytes(length: number): Uint8Array {
   return new Uint8Array(crypto.randomBytes(length));
@@ -23,8 +22,7 @@ export function hmac(encoding: Uint8Array, challenge: Uint8Array): Uint8Array {
   return Uint8Array.from(hmac.digest());
 }
 
-export function encode(piece: Uint8Array, index: number, key: Uint8Array, rounds = ROUNDS): Uint8Array {
-  const iv = num2bin16(index);
+export function encode(piece: Uint8Array, iv: Uint8Array, key: Uint8Array, rounds = ROUNDS): Uint8Array {
   let encoding = piece;
   for (let r = 0; r < rounds; ++r) {
     const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
@@ -34,8 +32,7 @@ export function encode(piece: Uint8Array, index: number, key: Uint8Array, rounds
   return encoding;
 }
 
-export function decode(encoding: Uint8Array, index: number, key: Uint8Array, rounds = ROUNDS): Uint8Array {
-  const iv = num2bin16(index);
+export function decode(encoding: Uint8Array, iv: Uint8Array, key: Uint8Array, rounds = ROUNDS): Uint8Array {
   let piece = encoding;
   for (let r = 0; r < rounds; ++r) {
     const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);

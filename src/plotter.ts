@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as path from 'path';
 import { PIECE_SIZE } from './constants';
 import * as crypto from './crypto';
+import { num2bin16 } from './utils';
 
 export class Plotter {
 
@@ -37,14 +38,16 @@ export class Plotter {
   public constructor(private readonly plot: fs.promises.FileHandle) {
   }
 
-  public async add(piece: Uint8Array, key: Uint8Array, index: number): Promise<void> {
-    const encoding = crypto.encode(piece, index, key);
+  public async add(piece: Uint8Array, key: Uint8Array, index: number): Promise<Uint8Array> {
+    const iv = num2bin16(index);
+    const encoding = crypto.encode(piece, iv, key);
     await this.plot.write(encoding, 0, PIECE_SIZE, index * PIECE_SIZE);
+    return encoding;
   }
 
   public async get(index: number): Promise<Uint8Array> {
     const encoding = Buffer.allocUnsafe(PIECE_SIZE);
-    await this.plot.read(encoding, 0, PIECE_SIZE, PIECE_SIZE * Number(index));
+    await this.plot.read(encoding, 0, PIECE_SIZE, PIECE_SIZE * index);
     return encoding;
   }
 }

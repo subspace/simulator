@@ -1,11 +1,11 @@
 // tslint:disable: no-console
 import * as process from 'process';
-import { GENESIS_PIECE, PIECE_SIZE, PLOT_SIZES } from './constants';
+import { PIECE_SIZE, PLOT_SIZES } from './constants';
 import * as crypto from './crypto';
 import { Plotter } from './plotter';
-import * as replicator from './replicator';
 import { Ed25519Signatures } from './signatures';
-import { num2bin16 } from './utils';
+import * as spv from './spv';
+import { createGenesisPiece, num2bin16 } from './utils';
 
 // ToDo
   // refactor signatures into wallet module
@@ -22,8 +22,11 @@ async function run(): Promise<void> {
     const keys = notary.generateKeypair(keySeed);
     const id = crypto.hash(keys.binaryPublicKey);
     console.log('Generated keys');
+    console.log(id);
 
-    // generate one merkle tree
+    // generate one genesis piece and merkle tree
+    const genesisPiece = createGenesisPiece('SUBSPACE');
+    const genesisPieceHash = crypto.hash(genesisPiece);
     const indexHashes: Uint8Array[] = [];
     for (let i = 0; i < 255; ++i) {
       indexHashes.push(crypto.hash(num2bin16(i)));
@@ -37,7 +40,8 @@ async function run(): Promise<void> {
     const pieceCount = plotSize / PIECE_SIZE;
     const plot = await Plotter.init(plotSize, process.argv[2]);
     for (let i = 0; i < pieceCount; ++i) {
-      await plot.add(GENESIS_PIECE, id, i);
+      const encoding = await plot.add(genesisPiece, id, i);
+      console.log(id, i, encoding);
     }
     const totalPlotTime = process.hrtime.bigint() - plotTimeStart;
     const averagePlotTime = totalPlotTime / BigInt(pieceCount);
@@ -49,12 +53,12 @@ async function run(): Promise<void> {
     let challenge = crypto.randomBytes(32);
     const evaluationTimeStart = process.hrtime.bigint();
     for (let i = 0; i < samples; ++i) {
-      const solution = await replicator.solve(challenge, pieceCount, plot);
-      // console.log(solution);
-      const merkleProof = merkleTree.proofs[solution.index];
-      const proof = replicator.prove(challenge, solution, notary, keys, merkleProof);
-      // console.log(proof);
-      replicator.verify(proof, notary, pieceCount, merkleTree.root);
+      const solution = await spv.solve(challenge, pieceCount, plot);
+      console.log(solution);
+      const merkleProof = merkleTree.proofs[solution.index % 256];
+      const proof = spv.prove(challenge, solution, notary, keys, merkleProof);
+      console.log(proof);
+      spv.verify(proof, notary, pieceCount, merkleTree.root, genesisPieceHash);
       challenge = crypto.hash(solution.tag);
     }
     const totalEvaluationTime = process.hrtime.bigint() - evaluationTimeStart;
